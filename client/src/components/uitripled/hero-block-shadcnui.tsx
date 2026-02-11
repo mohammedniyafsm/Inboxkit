@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { ArrowDown } from "lucide-react";
+import { Link } from "react-router-dom";
 import { RainbowButton } from "../ui/rainbow-button";
 import DarkVeil from "../DarkVeil";
 
@@ -25,7 +26,7 @@ export function HeroBlock() {
             transition={{ delay: 0.3, duration: 0.6 }}
             className="mb-6 text-6xl font-black italic tracking-tighter text-white md:text-8xl drop-shadow-2xl"
           >
-            CardHunt
+            Card Hunt
           </motion.h1>
 
           <motion.p
@@ -54,9 +55,11 @@ export function HeroBlock() {
             transition={{ delay: 0.5, duration: 0.6 }}
             className="flex flex-wrap justify-center gap-4"
           >
-            <RainbowButton size="sm" className="h-10 bg-[linear-gradient(#fff,#fff),linear-gradient(#fff_50%,rgba(255,255,255,0.6)_80%,rgba(0,0,0,0)),linear-gradient(90deg,var(--color-1),var(--color-5),var(--color-3),var(--color-4),var(--color-2))] px-8 text-xl font-bold text-black">
-              Lets Start
-            </RainbowButton>
+            <Link to="/arena">
+              <RainbowButton size="sm" className="h-10 bg-[linear-gradient(#fff,#fff),linear-gradient(#fff_50%,rgba(255,255,255,0.6)_80%,rgba(0,0,0,0)),linear-gradient(90deg,var(--color-1),var(--color-5),var(--color-3),var(--color-4),var(--color-2))] px-8 text-xl font-bold text-black">
+                Lets Start
+              </RainbowButton>
+            </Link>
           </motion.div>
 
 
