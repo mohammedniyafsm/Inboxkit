@@ -6,16 +6,23 @@ import cors from 'cors';
 import connectDB from './shared/config/database';
 import authRoutes from './modules/auth/auth.routes';
 import cardRoutes from './modules/card/card.routes';
-import healthRoutes from './shared/utils/health.routes'; 
+import healthRoutes from './shared/utils/health.routes';
 import { startExpiryChecker } from './shared/services/expiryChecker';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors({
-    origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
-    credentials: true
-}));
+const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+
+const corsOptions: cors.CorsOptions = {
+    origin: frontendUrl,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    credentials: true,
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
+
 app.use(express.json());
 
 connectDB();

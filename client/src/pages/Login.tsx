@@ -1,9 +1,11 @@
 import { GlassAuthCard } from "@/components/GlassAuthCard";
 import { useAuth } from "@/context/AuthContext";
+import { getApiBaseUrl } from "@/lib/env";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function Login() {
+    const apiBaseUrl = getApiBaseUrl();
     const { login } = useAuth();
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
@@ -13,7 +15,7 @@ export default function Login() {
         setIsLoading(true);
         setError("");
         try {
-            const response = await fetch("http://localhost:5000/api/auth/login", {
+            const response = await fetch(`${apiBaseUrl}/auth/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email: data.email, password: data.password }),

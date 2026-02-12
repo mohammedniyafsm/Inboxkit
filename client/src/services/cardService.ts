@@ -1,5 +1,6 @@
 import axios from "axios";
 import type { Card } from "@/types/card";
+import { getApiBaseUrl } from "@/lib/env";
 
 interface ApiResponse<T> {
   success: boolean;
@@ -7,8 +8,7 @@ interface ApiResponse<T> {
   data: T;
 }
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_BASE_URL = getApiBaseUrl();
 
 const api = axios.create({
   baseURL: API_BASE_URL,

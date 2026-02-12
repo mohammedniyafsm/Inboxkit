@@ -10,6 +10,7 @@ import { getMe } from "@/services/userService";
 import { useAuth } from "@/context/AuthContext";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { shuffleArray, triggerSideCannons } from "@/lib/utils";
+import { getApiBaseUrl } from "@/lib/env";
 
 // Sub-components
 import { ArenaToast } from "./ArenaToast";
@@ -50,6 +51,7 @@ const getErrorMessage = (err: unknown): string => {
 };
 
 export default function Arena() {
+    const apiBaseUrl = getApiBaseUrl();
     const { user } = useAuth();
     const [cards, setCards] = useState<Card[]>([]);
     const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
@@ -140,7 +142,7 @@ export default function Arena() {
 
             const [cardsData, leaderboardRes, me] = await Promise.all([
                 getAllCards(),
-                fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/leaderboard`)
+                fetch(`${apiBaseUrl}/auth/leaderboard`)
                     .then(res => res.json())
                     .then(data => data.data || [])
                     .catch(err => {
