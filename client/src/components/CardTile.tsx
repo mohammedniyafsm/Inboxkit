@@ -51,7 +51,9 @@ const CardTile: React.FC<CardTileProps> = ({
 
   return (
     <motion.div
+      layout
       layoutId={layoutId}
+      transition={{ layout: { type: "spring", stiffness: 260, damping: 28, mass: 0.7 } }}
       whileHover={{ scale: disabled ? 1 : 1.05 }}
       whileTap={{ scale: disabled ? 1 : 0.95 }}
       className={`relative aspect-square rounded-xl border-2 transition-all duration-300 overflow-hidden group backdrop-blur-sm cursor-pointer
@@ -151,3 +153,4 @@ const CardTile: React.FC<CardTileProps> = ({
 };
 
 export default CardTile;
+

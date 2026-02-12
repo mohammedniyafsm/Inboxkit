@@ -8,8 +8,7 @@ interface CardViewModalProps {
     displayCard: Card | undefined;
     justClaimedCard: Card | null;
     now: number;
-    setSelectedCardId: (id: string | null) => void;
-    setJustClaimedCard: (card: Card | null) => void;
+    onClose: () => void;
 }
 
 export const CardViewModal = ({
@@ -17,8 +16,7 @@ export const CardViewModal = ({
     displayCard,
     justClaimedCard,
     now,
-    setSelectedCardId,
-    setJustClaimedCard,
+    onClose,
 }: CardViewModalProps) => {
     const typeBadgeClass = (type?: Card["type"]) => {
         switch (type) {
@@ -26,11 +24,6 @@ export const CardViewModal = ({
             case "trap": return "border-red-400/40 text-red-200";
             default: return "border-white/20 text-white";
         }
-    };
-
-    const handleClose = () => {
-        setSelectedCardId(null);
-        setJustClaimedCard(null);
     };
 
     return (
@@ -41,7 +34,7 @@ export const CardViewModal = ({
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        onClick={handleClose}
+                        onClick={onClose}
                         className="absolute inset-0 bg-black/90 backdrop-blur-sm"
                     />
 
@@ -65,7 +58,7 @@ export const CardViewModal = ({
                             layoutId={`card-${displayCardId}`}
                             className="w-full h-full cursor-pointer relative"
                             animate={{ rotateY: 0 }}
-                            onClick={handleClose}
+                            onClick={onClose}
                         >
                             <div className={`absolute inset-0 rounded-[2rem] overflow-hidden border-2 bg-zinc-900 shadow-[0_0_50px_rgba(0,0,0,0.5)] transition-all duration-500
                             ${justClaimedCard && justClaimedCard._id === displayCardId
@@ -111,7 +104,7 @@ export const CardViewModal = ({
                             initial={{ opacity: 0, scale: 0 }}
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ delay: 0.8 }}
-                            onClick={handleClose}
+                            onClick={onClose}
                             className="absolute -top-12 right-0 bg-white text-black p-2 rounded-full hover:bg-zinc-200 transition-colors"
                         >
                             <X className="h-5 w-5" />

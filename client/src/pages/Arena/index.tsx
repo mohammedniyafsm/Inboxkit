@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { AnimatePresence } from "framer-motion";
 import { type Card } from "@/types/card";
 import ActionBlockedModal from "@/components/ActionBlockedModal";
@@ -22,6 +22,8 @@ import { ArenaDirectives } from "./ArenaDirectives";
 
 const MAX_CLAIMS = 5;
 const MAX_ACTIVE_CARDS = 4;
+const SHUFFLE_AFTER_CLOSE_DELAY_MS = 10000;
+const RATE_LIMIT_WINDOW_MS = 3 * 60 * 1000;
 
 const getOwnerId = (card: Card) => {
     if (!card.ownerId) return null;
@@ -35,9 +37,6 @@ const getOwnerUsername = (card: Card) => {
 
 const getErrorMessage = (err: unknown): string => {
     if (err && typeof err === "object") {
-        const maybeMessage = (err as { message?: unknown }).message;
-        if (typeof maybeMessage === "string") return maybeMessage;
-
         const maybeResponse = (err as { response?: unknown }).response;
         if (maybeResponse && typeof maybeResponse === "object") {
             const data = (maybeResponse as { data?: unknown }).data;
@@ -46,6 +45,9 @@ const getErrorMessage = (err: unknown): string => {
                 if (typeof msg === "string") return msg;
             }
         }
+
+        const maybeMessage = (err as { message?: unknown }).message;
+        if (typeof maybeMessage === "string") return maybeMessage;
     }
     return "Failed to claim card";
 };
@@ -85,6 +87,7 @@ export default function Arena() {
         subMessage?: string;
         type?: "info" | "directive" | "warning" | "success";
     } | null>(null);
+    const shuffleAfterCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Initial Rules Directive Sequence
     useEffect(() => {
@@ -103,7 +106,7 @@ export default function Arena() {
             },
             {
                 message: "Directive: Bandwidth Cap",
-                subMessage: "Max 5 claims per 2 minutes allowed before lockout.",
+                subMessage: "Max 5 claims per 3 minutes allowed before lockout.",
                 type: "directive" as const,
                 delay: 9000
             }
@@ -125,9 +128,18 @@ export default function Arena() {
         return () => clearInterval(id);
     }, []);
 
+    useEffect(() => {
+        return () => {
+            if (shuffleAfterCloseTimerRef.current) {
+                clearTimeout(shuffleAfterCloseTimerRef.current);
+                shuffleAfterCloseTimerRef.current = null;
+            }
+        };
+    }, []);
+
     // History Cleanup & Cooldown Local Tick
     useEffect(() => {
-        setClaimHistory((prev) => prev.filter((t) => now - t < (2 * 60 * 1000)));
+        setClaimHistory((prev) => prev.filter((t) => now - t < RATE_LIMIT_WINDOW_MS));
         if (cooldownUntil && now >= cooldownUntil) {
             setCooldownUntil(null);
         }
@@ -232,7 +244,7 @@ export default function Arena() {
     const resetInSeconds = useMemo(() => {
         if (claimHistory.length === 0) return 0;
         const oldest = Math.min(...claimHistory);
-        return Math.max(0, Math.ceil((oldest + (2 * 60 * 1000) - now) / 1000));
+        return Math.max(0, Math.ceil((oldest + RATE_LIMIT_WINDOW_MS - now) / 1000));
     }, [claimHistory, now]);
 
     const isCardActive = useCallback((card: Card) => {
@@ -312,7 +324,7 @@ export default function Arena() {
 
             const updated = await claimCard(id, token);
 
-            setCards((prev) => shuffleArray(prev.map((c) => (c._id === updated._id ? updated : c))));
+            setCards((prev) => prev.map((c) => (c._id === updated._id ? updated : c)));
             setClaimHistory((prev) => [...prev, Date.now()]);
 
             const me = await getMe(token);
@@ -328,7 +340,7 @@ export default function Arena() {
 
         } catch (err: unknown) {
             const message = getErrorMessage(err);
-            if (message.includes('Cooldown')) {
+            if (/cooldown/i.test(message)) {
                 const seconds = Number(message.match(/\d+/)?.[0] || '60');
                 setBlockModal({
                     isOpen: true,
@@ -336,17 +348,23 @@ export default function Arena() {
                     message: `Operational cooling active. Systems ready in ${seconds}s.`,
                     cooldownEndsAt: Date.now() + (seconds * 1000)
                 });
-            } else if (message.includes('active cards')) {
+            } else if (/active cards/i.test(message)) {
                 setBlockModal({
                     isOpen: true,
                     type: "limit",
                     message: `Territory limit reached. Release a sector to expand.`
                 });
-            } else if (message.includes('Rate limit')) {
+            } else if (/rate limit/i.test(message)) {
+                setToast({
+                    message: "Rate Limit Exceeded",
+                    subMessage: message,
+                    type: "warning"
+                });
+                setTimeout(() => setToast(null), 4000);
                 setBlockModal({
                     isOpen: true,
                     type: "rate_limit",
-                    message: `Action limit exceeded. Bandwidth recharge in ${resetInSeconds}s.`
+                    message
                 });
             } else {
                 setError(message);
@@ -386,6 +404,22 @@ export default function Arena() {
     const handleReshuffle = useCallback(() => {
         setCards(prev => shuffleArray(prev));
     }, []);
+
+    const handleCardViewClose = useCallback(() => {
+        const shouldShuffleAfterClose = !!justClaimedCard;
+        setSelectedCardId(null);
+        setJustClaimedCard(null);
+
+        if (shouldShuffleAfterClose) {
+            if (shuffleAfterCloseTimerRef.current) {
+                clearTimeout(shuffleAfterCloseTimerRef.current);
+            }
+            shuffleAfterCloseTimerRef.current = setTimeout(() => {
+                setCards((prev) => shuffleArray(prev));
+                shuffleAfterCloseTimerRef.current = null;
+            }, SHUFFLE_AFTER_CLOSE_DELAY_MS);
+        }
+    }, [justClaimedCard]);
 
     if (loading) {
         return (
@@ -431,8 +465,7 @@ export default function Arena() {
                     displayCard={displayCard}
                     justClaimedCard={justClaimedCard}
                     now={now}
-                    setSelectedCardId={setSelectedCardId}
-                    setJustClaimedCard={setJustClaimedCard}
+                    onClose={handleCardViewClose}
                 />
 
                 <ArenaHeader activeMyCardsCount={activeMyCardsCount} maxActiveCards={MAX_ACTIVE_CARDS} />
@@ -480,3 +513,4 @@ export default function Arena() {
         </TooltipProvider>
     );
 }
+
