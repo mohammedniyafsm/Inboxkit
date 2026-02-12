@@ -148,9 +148,9 @@ const ActionBlockedModal: React.FC<ActionBlockedModalProps> = ({
 
                             <button
                                 onClick={onClose}
-                                className={`mt-4 px-8 py-2 rounded-lg text-white font-bold uppercase tracking-wider text-xs transition-colors ${content.btnColor}`}
+                                className={`mt-6 px-12 py-3 rounded-xl text-white font-black uppercase tracking-[0.2em] text-sm transition-all duration-300 shadow-xl border border-white/10 active:scale-95 hover:brightness-110 ${content.btnColor}`}
                             >
-                                Acknowledge
+                                Acknowledge Directive
                             </button>
                         </div>
                     </motion.div>

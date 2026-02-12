@@ -3,6 +3,7 @@ import { type Card } from '@/types/card';
 
 interface ArenaSocketHandlers {
     onCardUpdate?: (card: Card) => void;
+    onCardExpired?: (card: Card) => void;
     onLeaderboardUpdate?: (data: { userId: string; username: string; totalPoints: number }) => void;
 }
 
@@ -30,6 +31,12 @@ class ArenaSocketManager {
             this.closeTimer = null;
         }
 
+        // Cancel any pending reconnect
+        if (this.reconnectTimer) {
+            clearTimeout(this.reconnectTimer);
+            this.reconnectTimer = null;
+        }
+
         this.token = token;
 
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -52,6 +59,10 @@ class ArenaSocketManager {
                 this.listeners.forEach(handler => {
                     if (message.type === 'cardUpdated' && handler.onCardUpdate) {
                         handler.onCardUpdate(message.data);
+                    }
+                    if (message.type === 'cardExpired') {
+                        if (handler.onCardExpired) handler.onCardExpired(message.data);
+                        else if (handler.onCardUpdate) handler.onCardUpdate(message.data);
                     }
                     if (message.type === 'leaderboardUpdated' && handler.onLeaderboardUpdate) {
                         handler.onLeaderboardUpdate(message.data);
@@ -130,6 +141,7 @@ export const useArenaSocket = (token: string | null, handlers: ArenaSocketHandle
         // Create a stable proxy object that calls the current ref
         const proxyHandlers: ArenaSocketHandlers = {
             onCardUpdate: (data) => handlersRef.current.onCardUpdate?.(data),
+            onCardExpired: (data) => handlersRef.current.onCardExpired?.(data),
             onLeaderboardUpdate: (data) => handlersRef.current.onLeaderboardUpdate?.(data),
         };
 

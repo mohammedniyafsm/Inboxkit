@@ -1,344 +1,159 @@
-# Card Arena Backend
+# 🔧 TileRush — Backend API
 
-A Node.js + TypeScript backend server for a real-time multiplayer card arena game with user authentication, role-based access control, and card management.
+REST API server for TileRush, built with **Express 5** and **MongoDB**. Handles authentication, card management, claiming logic, and real-time broadcast triggers.
 
-## 🎯 Features
-
-- ✅ User authentication (JWT-based)
-- ✅ Role-based access control (User & Admin)
-- ✅ Card management system (CRUD operations)
-- ✅ MongoDB database integration
-- ✅ Clean modular architecture
-- ✅ TypeScript for type safety
-- ✅ Ready for WebSocket integration
-
-## 🛠️ Tech Stack
-
-- **Runtime**: Node.js
-- **Framework**: Express.js
-- **Database**: MongoDB (Mongoose ODM)
-- **Authentication**: JWT (JSON Web Tokens)
-- **Language**: TypeScript
-- **Dev Tools**: Nodemon, ts-node
+---
 
 ## 📁 Project Structure
 
 ```
 backend/
 ├── src/
-│   ├── config/
-│   │   └── database.ts          # MongoDB connection
-│   ├── controllers/
-│   │   ├── auth.controller.ts   # Auth endpoints logic
-│   │   └── card.controller.ts   # Card endpoints logic
-│   ├── models/
-│   │   ├── User.model.ts        # User schema
-│   │   └── Card.model.ts        # Card schema
-│   ├── routes/
-│   │   ├── auth.routes.ts       # Auth routes
-│   │   ├── card.routes.ts       # Card routes
-│   │   └── health.routes.ts     # Health check
-│   ├── middleware/
-│   │   ├── auth.middleware.ts   # JWT verification
-│   │   └── role.middleware.ts   # Role-based access
-│   ├── services/
-│   │   ├── auth.service.ts      # Auth business logic
-│   │   └── card.service.ts      # Card business logic
-│   ├── utils/
-│   │   ├── jwt.util.ts          # JWT helpers
-│   │   └── response.util.ts     # API response helpers
-│   ├── app.ts                   # Express app config
-│   └── server.ts                # Server entry point
-├── dist/                        # Compiled TypeScript
-├── .env                         # Environment variables
-├── .env.example                 # Environment template
-├── .gitignore
+│   ├── modules/                 # Feature-based modules
+│   │   ├── auth/                # Authentication logic
+│   │   │   ├── auth.controller.ts
+│   │   │   ├── auth.service.ts
+│   │   │   └── auth.routes.ts
+│   │   ├── card/                # Card & Game logic
+│   │   │   ├── card.controller.ts
+│   │   │   ├── card.service.ts
+│   │   │   ├── card.repository.ts
+│   │   │   └── card.routes.ts
+│   │   └── user/                # User management
+│   │       └── user.repository.ts
+│   ├── shared/                  # Cross-cutting concerns
+│   │   ├── config/              # database.ts
+│   │   ├── middleware/          # auth.middleware.ts
+│   │   ├── models/              # Mongoose schemas (Card, User, ClaimLog)
+│   │   ├── services/            # Shared services (expiryChecker, realtimeBroadcast)
+│   │   └── utils/               # response.util, jwt.util, health.routes
+│   ├── scripts/
+│   │   └── seedAllCards.ts      # Database seeder
+│   └── server.ts                # App entry point
+├── .env
 ├── package.json
-├── tsconfig.json
-├── nodemon.json
-└── README.md
+└── tsconfig.json
 ```
 
-## 🚀 Getting Started
+### Architecture Layering (Functional)
+The backend follows a strict **Controller → Service → Repository** pattern using exported functions (no classes):
+- **Repositories**: Pure database access (Mongoose queries).
+- **Services**: Business logic and coordination (points, cooldowns, broadcasts).
+- **Controllers**: HTTP request/response handling.
 
-### Prerequisites
-
-- Node.js (v18 or higher)
-- MongoDB (local or MongoDB Atlas)
-- npm or yarn
-
-### Installation
-
-1. **Clone or navigate to the project**:
-   ```bash
-   cd card-arena-backend
-   ```
-
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
-
-3. **Configure environment variables**:
-   
-   Copy `.env.example` to `.env` and update with your values:
-   ```env
-   PORT=5000
-   MONGO_URI=mongodb://localhost:27017/card-arena
-   JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
-   NODE_ENV=development
-   ```
-
-   For MongoDB Atlas, use a connection string like:
-   ```
-   MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/card-arena?retryWrites=true&w=majority
-   ```
-
-4. **Start development server**:
-   ```bash
-   npm run dev
-   ```
-
-   Or build and run production:
-   ```bash
-   npm run build
-   npm start
-   ```
-
-## 📡 API Endpoints
-
-### Health Check
-
-```http
-GET /api/health
-```
-Returns server status and uptime.
-
-### Authentication
-
-#### Register User
-```http
-POST /api/auth/register
-Content-Type: application/json
-
-{
-  "username": "johndoe",
-  "email": "john@example.com",
-  "password": "password123"
-}
-```
-
-#### Login
-```http
-POST /api/auth/login
-Content-Type: application/json
-
-{
-  "email": "john@example.com",
-  "password": "password123"
-}
-```
-
-**Response**:
-```json
-{
-  "success": true,
-  "message": "Login successful",
-  "data": {
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "user": {
-      "id": "507f1f77bcf86cd799439011",
-      "username": "johndoe",
-      "email": "john@example.com",
-      "role": "user",
-      "totalPoints": 0
-    }
-  }
-}
-```
-
-### Card Management
-
-#### Get All Cards (Public)
-```http
-GET /api/cards
-```
-
-#### Get Card by ID (Public)
-```http
-GET /api/cards/:id
-```
-
-#### Create Card (Admin Only)
-```http
-POST /api/cards
-Authorization: Bearer <admin-jwt-token>
-Content-Type: application/json
-
-{
-  "name": "Fire Dragon",
-  "image": "https://example.com/dragon.jpg",
-  "points": 100,
-  "type": "rare"
-}
-```
-
-#### Delete Card (Admin Only)
-```http
-DELETE /api/cards/:id
-Authorization: Bearer <admin-jwt-token>
-```
-
-## 🔐 Authorization
-
-Protected routes require a JWT token in the Authorization header:
-
-```
-Authorization: Bearer <your-jwt-token>
-```
-
-**Roles**:
-- `user` - Default role for all registered users
-- `admin` - Required for card creation and deletion
-
-## 👨‍💼 Creating an Admin User
-
-Since there's no admin registration endpoint (security best practice), create an admin manually in MongoDB:
-
-### Using MongoDB Shell:
-```javascript
-use card-arena
-
-db.users.insertOne({
-  username: "admin",
-  email: "admin@example.com",
-  password: "admin123",
-  role: "admin",
-  totalPoints: 0,
-  createdAt: new Date(),
-  updatedAt: new Date()
-})
-```
-
-### Using MongoDB Compass:
-1. Connect to your database
-2. Select the `users` collection
-3. Click "Add Data" → "Insert Document"
-4. Paste:
-```json
-{
-  "username": "admin",
-  "email": "admin@example.com",
-  "password": "admin123",
-  "role": "admin",
-  "totalPoints": 0,
-  "createdAt": {"$date": "2024-01-01T00:00:00.000Z"},
-  "updatedAt": {"$date": "2024-01-01T00:00:00.000Z"}
-}
-```
-
-## 🧪 Testing the API
-
-You can test the API using:
-- **Postman**: Import the endpoints and test manually
-- **Thunder Client** (VS Code extension): Lightweight API testing
-- **cURL**: Command-line testing
-
-Example cURL commands:
-
-```bash
-# Register a user
-curl -X POST http://localhost:5000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"username":"testuser","email":"test@example.com","password":"test123"}'
-
-# Login
-curl -X POST http://localhost:5000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"test123"}'
-
-# Get all cards
-curl http://localhost:5000/api/cards
-
-# Create a card (replace <TOKEN> with admin JWT)
-curl -X POST http://localhost:5000/api/cards \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <TOKEN>" \
-  -d '{"name":"Fire Dragon","image":"https://example.com/dragon.jpg","points":100,"type":"rare"}'
-```
-
-## 🔮 Future Enhancements
-
-This backend is designed to scale. Here's what can be added:
-
-### Planned Features:
-- 🔐 Password hashing (bcrypt)
-- 🔄 Refresh token rotation
-- 🌐 WebSocket server for real-time gameplay
-- 🎮 Game room management
-- 📊 Player stats and leaderboard
-- 💳 Card trading system
-- 🎯 Match history
-- 🔔 Real-time notifications
-
-### Architecture Considerations:
-
-**Why separate WebSocket server?**
-- Isolate real-time layer from HTTP API
-- Independent scaling (scale WebSocket servers separately)
-- Better resource management
-- Can use Redis pub/sub for multi-server communication
-- Easier to deploy and maintain
-
-**Stateless Design:**
-- No session storage in memory
-- JWT-based authentication (stateless)
-- All state in MongoDB/Redis
-- Ready for horizontal scaling
-
-## 📝 Development Notes
-
-### Current State:
-- ⚠️ **Passwords are stored as plain text** (as requested for prototype)
-- ✅ **Stateless authentication** (ready for scaling)
-- ✅ **Modular architecture** (easy to extend)
-- ✅ **TypeScript** (type safety and better DX)
-
-### Before Production:
-1. Implement password hashing (bcrypt)
-2. Add rate limiting
-3. Implement refresh tokens
-4. Add input sanitization
-5. Setup logging (Winston/Morgan)
-6. Add comprehensive error tracking
-7. Implement request validation (Joi/Zod)
-8. Setup monitoring and alerting
-
-## 🐛 Troubleshooting
-
-### MongoDB Connection Issues:
-- Ensure MongoDB is running locally or Atlas IP whitelist is configured
-- Check `MONGO_URI` in `.env` file
-- Verify network connectivity
-
-### JWT Errors:
-- Ensure `JWT_SECRET` is set in `.env`
-- Check token expiration (default: 7 days)
-- Verify token format in Authorization header
-
-### Build Errors:
-- Run `npm install` to ensure all dependencies are installed
-- Delete `node_modules` and `package-lock.json`, then reinstall
-- Check TypeScript version compatibility
-
-## 📄 License
-
-ISC
-
-## 👨‍💻 Author
-
-Built as a scalable backend for a multiplayer card arena game.
 
 ---
 
-**Ready to build something awesome! 🚀**
+## ⚙️ Environment Variables
+
+Create a `.env` file in the `backend/` directory:
+
+```env
+PORT=5000
+MONGO_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/<dbname>
+JWT_SECRET=your-super-secret-jwt-key
+NODE_ENV=development
+
+# Claim System Configuration
+MAX_CLAIMS=5                    # Max claims per window
+CLAIM_WINDOW_MINUTES=3          # Rate limit window (minutes)
+MAX_ACTIVE_CARDS=4              # Max cards a user can hold at once
+BASE_COOLDOWN_SECONDS=10        # Cooldown after each claim
+TRAP_EXTRA_COOLDOWN_SECONDS=30  # Additional cooldown for trap cards
+
+# Internal Communication
+INTERNAL_SECRET=your-internal-secret-key
+REALTIME_SERVER_URL=http://localhost:3001
+```
+
+---
+
+## 🚀 Getting Started
+
+```bash
+# Install dependencies
+npm install
+
+# Seed the database with 60 cards (30 Normal, 12 Rare, 18 Trap)
+npx ts-node src/scripts/seedAllCards.ts
+
+# Start development server (auto-restarts on changes)
+npm run dev
+```
+
+The server will start on **http://localhost:5000**.
+
+---
+
+## 📡 API Endpoints
+
+### Authentication
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| `POST` | `/api/auth/signup` | Register a new user | ❌ |
+| `POST` | `/api/auth/login` | Login and receive JWT | ❌ |
+
+### Cards
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| `GET` | `/api/cards` | Fetch all cards | ✅ |
+| `POST` | `/api/cards/:id/claim` | Claim a card | ✅ |
+
+### Health
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| `GET` | `/api/health` | Server health check | ❌ |
+
+---
+
+## 🗄️ Data Models
+
+### Card
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | String | Card display name |
+| `image` | String | Image URL |
+| `type` | Enum | `normal`, `rare`, `trap` |
+| `points` | Number | Points awarded (negative for traps) |
+| `duration` | Number | How long the card stays claimed (**seconds**) |
+| `ownerId` | ObjectId | Reference to the owning User (null if unclaimed) |
+| `expiresAt` | Date | When the claim expires |
+
+### User
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `username` | String | Unique display name |
+| `email` | String | Unique email |
+| `password` | String | Hashed password (bcrypt) |
+| `totalPoints` | Number | Cumulative score |
+| `cooldownUntil` | Date | When the user can claim again |
+
+### ClaimLog
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `userId` | ObjectId | Who claimed |
+| `cardId` | ObjectId | Which card |
+| `claimedAt` | Date | Timestamp of the claim |
+
+---
+
+## 🔄 Real-Time Broadcast
+
+When a card is claimed, the backend sends an internal HTTP POST to the **realtime-server**:
+
+- `POST /internal/broadcast/card-update` — Broadcasts updated card data
+- `POST /internal/broadcast/leaderboard-update` — Broadcasts leaderboard changes
+
+These requests are authenticated via the `x-internal-secret` header.
+
+---
+
+## 📄 License
+
+MIT

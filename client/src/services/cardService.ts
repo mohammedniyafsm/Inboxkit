@@ -38,6 +38,7 @@ export const claimCard = async (id: string, token: string): Promise<Card> => {
   );
   return res.data.data;
 };
+
 export const getAllCards = async (): Promise<Card[]> => {
   // Try to get token if needed, or hit a public endpoint
   const token = localStorage.getItem('token');

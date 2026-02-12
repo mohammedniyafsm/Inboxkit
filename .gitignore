@@ -1,0 +1,25 @@
+# === Root Level ===
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+desktop.ini
+
+# Build and dependencies
+node_modules/
+dist/
+build/
+
+# Config
+.env
+.env.local
+.env.*.local

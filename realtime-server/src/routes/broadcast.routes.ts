@@ -52,4 +52,20 @@ router.post('/leaderboard-update', verifyInternalSecret, (req: Request, res: Res
     }
 });
 
+router.post('/card-expired', verifyInternalSecret, (req: Request, res: Response) => {
+    const { card } = req.body;
+
+    if (!card) {
+        return res.status(400).json({ error: 'Missing card data' });
+    }
+
+    try {
+        broadcast('cardExpired', card);
+        return res.json({ success: true, message: 'Card expired broadcast triggered' });
+    } catch (error) {
+        console.error('Broadcast error:', error);
+        return res.status(500).json({ error: 'Failed to broadcast' });
+    }
+});
+
 export default router;

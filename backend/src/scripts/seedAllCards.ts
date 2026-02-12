@@ -2,7 +2,7 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import path from 'path';
-import Card from '../models/Card.model';
+import Card from '../shared/models/Card.model';
 
 // Load env vars
 dotenv.config({ path: path.join(__dirname, '../../.env') });
@@ -45,7 +45,7 @@ const seed = async () => {
                 name: normalNames[i] || `Normal Card ${i + 1}`,
                 image: normalImages[i % 2],
                 points: Math.floor(Math.random() * (6 - 2 + 1)) + 2, // 2-6
-                duration: parseFloat((Math.random() * (0.5 - 0.2) + 0.2).toFixed(1)), // 0.2-0.5 min (12-30s)
+                duration: Math.floor(Math.random() * (60 - 30 + 1)) + 30, // 30-60 seconds
                 type: 'normal',
                 ownerId: null,
                 expiresAt: null
@@ -54,18 +54,18 @@ const seed = async () => {
 
         // --- 2. RARE CARDS (12) ---
         const rareCards = [
-            { name: "Emily the Strategist", image: "https://ui.dimaac.com/_next/image?url=%2Femily0.png&w=1080&q=75", points: 22, duration: 1 },
-            { name: "Roin the Swift", image: "https://ui.dimaac.com/_next/image?url=%2Froiin0.png&w=1080&q=75", points: 25, duration: 1.2 },
-            { name: "Daisy of Light", image: "https://ui.dimaac.com/_next/image?url=%2Fdaisy0.png&w=1080&q=75", points: 20, duration: 0.8 },
-            { name: "Lance the Guardian", image: "https://ui.dimaac.com/_next/image?url=%2Flance0.png&w=1080&q=75", points: 30, duration: 1.5 },
-            { name: "Linda the Shadow", image: "https://ui.dimaac.com/_next/image?url=%2Flinda0.png&w=1080&q=75", points: 24, duration: 1 },
-            { name: "Renei the Mystic", image: "https://ui.dimaac.com/_next/image?url=%2Frenei0.png&w=1080&q=75", points: 28, duration: 1.2 },
-            { name: "Flame Warden", image: "https://i.pinimg.com/736x/d2/b5/27/d2b5271afaafa138387831f810a14c21.jpg", points: 32, duration: 1.4 },
-            { name: "Storm Caller", image: "https://i.pinimg.com/736x/8f/5a/af/8f5aaf8a9b006a434b9dd415818294ae.jpg", points: 26, duration: 0.9 },
-            { name: "Void Knight", image: "https://i.pinimg.com/1200x/87/14/0d/87140d8f7dd8b3fc9974058b14b634d6.jpg", points: 35, duration: 1.5 },
-            { name: "Frost Queen", image: "https://i.pinimg.com/1200x/fc/87/9f/fc879f67541051d0ccfe8a5743e6df5a.jpg", points: 31, duration: 1.3 },
-            { name: "Arcane Archer", image: "https://i.pinimg.com/736x/f9/ff/c9/f9ffc9bf79c6aaf467821d88f2c2a594.jpg", points: 27, duration: 1 },
-            { name: "Nightblade", image: "https://i.pinimg.com/1200x/39/9b/00/399b007f0a02ad01e450a9387d246881.jpg", points: 29, duration: 1.1 }
+            { name: "Emily the Strategist", image: "https://ui.dimaac.com/_next/image?url=%2Femily0.png&w=1080&q=75", points: 22, duration: 90 },
+            { name: "Roin the Swift", image: "https://ui.dimaac.com/_next/image?url=%2Froiin0.png&w=1080&q=75", points: 25, duration: 110 },
+            { name: "Daisy of Light", image: "https://ui.dimaac.com/_next/image?url=%2Fdaisy0.png&w=1080&q=75", points: 20, duration: 80 },
+            { name: "Lance the Guardian", image: "https://ui.dimaac.com/_next/image?url=%2Flance0.png&w=1080&q=75", points: 30, duration: 120 },
+            { name: "Linda the Shadow", image: "https://ui.dimaac.com/_next/image?url=%2Flinda0.png&w=1080&q=75", points: 24, duration: 90 },
+            { name: "Renei the Mystic", image: "https://ui.dimaac.com/_next/image?url=%2Frenei0.png&w=1080&q=75", points: 28, duration: 100 },
+            { name: "Flame Warden", image: "https://i.pinimg.com/736x/d2/b5/27/d2b5271afaafa138387831f810a14c21.jpg", points: 32, duration: 100 },
+            { name: "Storm Caller", image: "https://i.pinimg.com/736x/8f/5a/af/8f5aaf8a9b006a434b9dd415818294ae.jpg", points: 26, duration: 75 },
+            { name: "Void Knight", image: "https://i.pinimg.com/1200x/87/14/0d/87140d8f7dd8b3fc9974058b14b634d6.jpg", points: 35, duration: 120 },
+            { name: "Frost Queen", image: "https://i.pinimg.com/1200x/fc/87/9f/fc879f67541051d0ccfe8a5743e6df5a.jpg", points: 31, duration: 110 },
+            { name: "Arcane Archer", image: "https://i.pinimg.com/736x/f9/ff/c9/f9ffc9bf79c6aaf467821d88f2c2a594.jpg", points: 27, duration: 90 },
+            { name: "Nightblade", image: "https://i.pinimg.com/1200x/39/9b/00/399b007f0a02ad01e450a9387d246881.jpg", points: 29, duration: 95 }
         ];
 
         rareCards.forEach(c => {
@@ -75,19 +75,19 @@ const seed = async () => {
         // --- 3. TRAP CARDS (18) ---
         // 13 Unique + 5 Random Duplicates
         const trapPool = [
-            { name: "Cursed Sigil", image: "https://i.pinimg.com/736x/c6/88/ce/c688cee4f38d7149bd85832b62ad7433.jpg", points: -12, duration: 0.2 },
-            { name: "Burning Rift", image: "https://i.pinimg.com/736x/bc/6c/4b/bc6c4b623e43c60a51253f8d79e20aca.jpg", points: -15, duration: 0.3 },
-            { name: "Glitch Collapse", image: "https://i.pinimg.com/736x/38/e2/9e/38e29e7e4599b124f86ca6aff4bc8ca5.jpg", points: -10, duration: 0.2 },
-            { name: "Blood Omen", image: "https://i.pinimg.com/736x/ab/20/1a/ab201a7cbd2c72d54385fa16595948c0.jpg", points: -18, duration: 0.3 },
-            { name: "Shadow Fracture", image: "https://i.pinimg.com/736x/0a/ed/58/0aed5834472bfbf846e188237319304d.jpg", points: -11, duration: 0.2 },
-            { name: "Dark Collapse", image: "https://i.pinimg.com/736x/28/26/24/28262490eef98fd7d688008fd962b7c5.jpg", points: -13, duration: 0.3 },
-            { name: "Poison Seal", image: "https://i.pinimg.com/736x/ac/9f/83/ac9f832186a7f3c96cd2a6b64f9ff1b5.jpg", points: -9, duration: 0.2 },
-            { name: "Broken Mirror", image: "https://i.pinimg.com/736x/c1/fb/e4/c1fbe4f0b3f5895052d8d650abd77bbe.jpg", points: -8, duration: 0.1 },
-            { name: "Time Distortion", image: "https://i.pinimg.com/736x/fa/e4/06/fae406f493d5ef99615f6645f8f885dc.jpg", points: -14, duration: 0.3 },
-            { name: "Lava Vein", image: "https://i.pinimg.com/736x/20/10/9f/20109f4f6a1c75e5311ca6eaf3f0a7b2.jpg", points: -10, duration: 0.2 },
-            { name: "Void Pulse", image: "https://i.pinimg.com/736x/3e/08/f0/3e08f0a6d51456431680ce96ad0609bd.jpg", points: -16, duration: 0.3 },
-            { name: "Death Mark", image: "https://i.pinimg.com/736x/68/14/31/68143126d6b4c6545c885c6225957422.jpg", points: -14, duration: 0.3 },
-            { name: "Abyss Crack", image: "https://i.pinimg.com/736x/2f/32/fb/2f32fbd659cabc5726d1b469de32fea2.jpg", points: -12, duration: 0.2 }
+            { name: "Cursed Sigil", image: "https://i.pinimg.com/736x/c6/88/ce/c688cee4f38d7149bd85832b62ad7433.jpg", points: -12, duration: 15 },
+            { name: "Burning Rift", image: "https://i.pinimg.com/736x/bc/6c/4b/bc6c4b623e43c60a51253f8d79e20aca.jpg", points: -15, duration: 20 },
+            { name: "Glitch Collapse", image: "https://i.pinimg.com/736x/38/e2/9e/38e29e7e4599b124f86ca6aff4bc8ca5.jpg", points: -10, duration: 15 },
+            { name: "Blood Omen", image: "https://i.pinimg.com/736x/ab/20/1a/ab201a7cbd2c72d54385fa16595948c0.jpg", points: -18, duration: 25 },
+            { name: "Shadow Fracture", image: "https://i.pinimg.com/736x/0a/ed/58/0aed5834472bfbf846e188237319304d.jpg", points: -11, duration: 15 },
+            { name: "Dark Collapse", image: "https://i.pinimg.com/736x/28/26/24/28262490eef98fd7d688008fd962b7c5.jpg", points: -13, duration: 20 },
+            { name: "Poison Seal", image: "https://i.pinimg.com/736x/ac/9f/83/ac9f832186a7f3c96cd2a6b64f9ff1b5.jpg", points: -9, duration: 15 },
+            { name: "Broken Mirror", image: "https://i.pinimg.com/736x/c1/fb/e4/c1fbe4f0b3f5895052d8d650abd77bbe.jpg", points: -8, duration: 10 },
+            { name: "Time Distortion", image: "https://i.pinimg.com/736x/fa/e4/06/fae406f493d5ef99615f6645f8f885dc.jpg", points: -14, duration: 20 },
+            { name: "Lava Vein", image: "https://i.pinimg.com/736x/20/10/9f/20109f4f6a1c75e5311ca6eaf3f0a7b2.jpg", points: -10, duration: 15 },
+            { name: "Void Pulse", image: "https://i.pinimg.com/736x/3e/08/f0/3e08f0a6d51456431680ce96ad0609bd.jpg", points: -16, duration: 25 },
+            { name: "Death Mark", image: "https://i.pinimg.com/736x/68/14/31/68143126d6b4c6545c885c6225957422.jpg", points: -14, duration: 20 },
+            { name: "Abyss Crack", image: "https://i.pinimg.com/736x/2f/32/fb/2f32fbd659cabc5726d1b469de32fea2.jpg", points: -12, duration: 15 }
         ];
 
         // Add 13 unique

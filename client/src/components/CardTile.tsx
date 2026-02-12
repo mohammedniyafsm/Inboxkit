@@ -39,24 +39,38 @@ const CardTile: React.FC<CardTileProps> = ({
   // Mystery/Occupied cards have uniform styling
   const borderClass = isMyActive
     ? activeBorderColors[card.type as keyof typeof activeBorderColors]
-    : isClaimed ? "border-red-900/30 hover:border-red-900/50" : "border-white/10 hover:border-white/30";
+    : isClaimed
+      ? "border-red-600/80 ring-1 ring-red-500/20" // Stronger red border for claimed
+      : "border-white/10 hover:border-emerald-500/50";
 
   const bgClass = isMyActive
     ? activeBgColors[card.type as keyof typeof activeBgColors]
-    : isClaimed ? "bg-red-950/20" : "bg-zinc-900/40";
+    : isClaimed
+      ? "bg-[repeating-linear-gradient(45deg,rgba(0,0,0,0),rgba(0,0,0,0)_10px,rgba(220,38,38,0.1)_10px,rgba(220,38,38,0.1)_20px)] grayscale opacity-60 hover:opacity-100 transition-opacity" // Red striped pattern
+      : "bg-zinc-900/40 hover:bg-emerald-500/5 transition-colors";
 
   return (
     <motion.div
       layoutId={layoutId}
+      whileHover={{ scale: disabled ? 1 : 1.05 }}
+      whileTap={{ scale: disabled ? 1 : 0.95 }}
       className={`relative aspect-square rounded-xl border-2 transition-all duration-300 overflow-hidden group backdrop-blur-sm cursor-pointer
       ${borderClass} 
       ${bgClass}
-      ${isClaimed && !isMyActive ? "opacity-50 grayscale" : "hover:scale-[1.02] hover:shadow-lg"}
+      ${isClaimed && !isMyActive ? "opacity-50 grayscale" : "hover:shadow-[0_0_20px_rgba(16,185,129,0.2)]"}
       ${isMyActive ? "ring-2 ring-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]" : ""}
       ${disabled && !isClaimed ? "cursor-not-allowed opacity-70" : ""}
+      ${!isClaimed && !isMyActive ? "animate-pulse-subtle" : ""}
       `}
       onClick={disabled ? undefined : onClick}
     >
+      {/* Interactive indicator for unclaimed */}
+      {!isClaimed && !isMyActive && (
+        <div className="absolute top-1 r-1">
+          <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
+        </div>
+      )}
+
       {/* Loading Overlay */}
       {loading && (
         <div className="absolute inset-0 z-20 bg-black/50 flex items-center justify-center">
@@ -110,11 +124,11 @@ const CardTile: React.FC<CardTileProps> = ({
         {/* BLOCKED (Not Mine) */}
         {isClaimed && !isMyActive && (
           <div className="flex flex-col items-center">
-            <Lock size={24} className="text-red-500/80 mb-2" />
-            <div className="text-red-500 font-black text-xs uppercase tracking-widest animate-pulse">LOCKED</div>
+            <Lock size={20} className="text-red-500/80 mb-2" />
+            <div className="text-red-500 font-black text-[10px] uppercase tracking-widest">LOCKED</div>
             {ownerUsername && (
-              <div className="text-red-400/60 text-[10px] mt-1 font-mono">
-                by {ownerUsername}
+              <div className="text-red-400/60 text-[9px] mt-1 font-mono truncate max-w-[60px]">
+                {ownerUsername}
               </div>
             )}
           </div>
@@ -123,11 +137,11 @@ const CardTile: React.FC<CardTileProps> = ({
         {/* UNCLAIMED: Mystery */}
         {!isClaimed && !isMyActive && (
           <>
-            <div className="text-zinc-700 mb-2 group-hover:text-emerald-500 transition-colors duration-300">
-              <Crosshair size={24} />
+            <div className="text-zinc-600 mb-2 group-hover:text-emerald-400 group-hover:scale-110 transition-all duration-300">
+              <Crosshair size={22} />
             </div>
-            <div className="text-zinc-600 group-hover:text-emerald-400 font-black text-[10px] uppercase tracking-widest transition-colors duration-300">
-              SEIZE SECTOR
+            <div className="text-zinc-500 group-hover:text-emerald-400 font-black text-[9px] uppercase tracking-tighter leading-none transition-colors duration-300">
+              SEIZE <br /> SECTOR
             </div>
           </>
         )}
