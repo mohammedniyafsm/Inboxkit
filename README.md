@@ -1,90 +1,212 @@
-<p align="center">
-  <img src="https://img.shields.io/badge/Status-In%20Development-yellow?style=flat-square" alt="Status" />
-  <img src="https://img.shields.io/badge/License-MIT-blue?style=flat-square" alt="License" />
-  <img src="https://img.shields.io/badge/Node-18%2B-green?style=flat-square" alt="Node" />
-</p>
+# Card Rush
 
-# 🎮 TileRush — Real-Time Card Arena
+Real-time multiplayer grid capture application built as a full-stack system:
 
-**TileRush** is a competitive, real-time multiplayer card-claiming game where players race to seize territory on a dynamic grid. Claim cards, earn points, dodge traps, and dominate the leaderboard — all updating live via WebSockets.
+- `client`: React + Vite frontend
+- `backend`: Express + MongoDB API with game rules
+- `realtime-server`: WebSocket broadcast service
 
----
+Users capture cells on a shared grid, gain or lose points based on cell type, and see state updates instantly across connected clients.
 
-### System Architecture
+## Highlights
 
-The project follows a **Modular Monolith** pattern on the backend, ensuring high maintainability and clear separation of concerns:
+- Real-time shared state via WebSockets
+- Atomic conflict handling for concurrent claims
+- JWT-based authenticated gameplay
+- Cooldowns, rate limits, and max-active-cell constraints
+- Live leaderboard updates
+- Expiry scheduler that releases captured cells automatically
 
-```mermaid
-graph LR
-    A[Client - React SPA] -->|REST API| B[Backend - Modular Express Monolith]
-    B -->|Internal HTTP| C[Realtime Server - WebSocket]
-    C -->|WebSocket Push| A
-    B -->|MongoDB| D[(Database)]
+## Architecture
+
+```text
+React Client  --REST-->  Backend API  --MongoDB-->  Database
+      ^                         |
+      |                         | internal HTTP (signed with INTERNAL_SECRET)
+      +------ WebSocket <-------+
+                 Realtime Server
 ```
 
-- **Feature Modules**: Logic grouped by feature (`auth`, `card`, `user`).
-- **Shared Layer**: Centralized models, middleware, and common utilities.
+## Repository Layout
 
----
+```text
+InboxKit/
+  backend/          # REST API, game logic, MongoDB models, expiry worker
+  client/           # React SPA (auth, arena UI, live updates)
+  realtime-server/  # WebSocket server + internal broadcast endpoints
+  README.md
+```
 
-## ⚙️ Configuration
+## Tech Stack
 
-Create `.env` files in the following directories:
+| Layer | Stack |
+|---|---|
+| Frontend | React 19, TypeScript, Vite, Tailwind CSS, Framer Motion |
+| Backend API | Node.js, Express, TypeScript, Mongoose |
+| Realtime | `ws` WebSocket server, Express internal endpoints |
+| Database | MongoDB |
+| Auth | JWT |
+| Deployment-ready config | Vercel configs in each service |
+
+## Prerequisites
+
+- Node.js 18+
+- npm 9+
+- MongoDB database (local or Atlas)
+
+## Quick Start (Local Development)
+
+1. Install dependencies in each service.
+
+```bash
+cd backend && npm install
+cd ../realtime-server && npm install
+cd ../client && npm install
+```
+
+2. Configure environment variables (see next section).
+3. Seed cards in the database.
+
+```bash
+cd backend
+npx ts-node src/scripts/seedAllCards.ts
+```
+
+4. Run all services in separate terminals.
+
+```bash
+# Terminal 1
+cd backend
+npm run dev
+
+# Terminal 2
+cd realtime-server
+npm run dev
+
+# Terminal 3
+cd client
+npm run dev
+```
+
+5. Open `http://localhost:5173`.
+
+## Environment Variables
 
 ### `backend/.env`
 
 ```env
 PORT=5000
 MONGO_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/<dbname>
-JWT_SECRET=your-super-secret-jwt-key
+JWT_SECRET=replace-with-strong-secret
 NODE_ENV=development
+FRONTEND_URL=http://localhost:5173
+
 MAX_CLAIMS=3
 CLAIM_WINDOW_MINUTES=2
 MAX_ACTIVE_CARDS=2
 BASE_COOLDOWN_SECONDS=60
 TRAP_EXTRA_COOLDOWN_SECONDS=300
-INTERNAL_SECRET=your-internal-secret-key
+
+INTERNAL_SECRET=replace-with-shared-internal-secret
 REALTIME_SERVER_URL=http://localhost:3001
 ```
-
 
 ### `realtime-server/.env`
 
 ```env
 PORT=3001
-JWT_SECRET=your-super-secret-jwt-key
-INTERNAL_SECRET=your-internal-secret-key
+JWT_SECRET=replace-with-strong-secret
+INTERNAL_SECRET=replace-with-shared-internal-secret
 ```
 
-> ⚠️ `JWT_SECRET` and `INTERNAL_SECRET` must be **identical** across both services.
+### `client/.env`
 
----
+```env
+VITE_API_URL=http://localhost:5000/api
+VITE_SOCKET_URL=ws://localhost:3001
+```
 
-## 🤝 Contribution Guide
+### Required Secret Consistency
 
-Contributions are warmly welcome! Please follow these steps:
+- `backend.JWT_SECRET` must match `realtime-server.JWT_SECRET`
+- `backend.INTERNAL_SECRET` must match `realtime-server.INTERNAL_SECRET`
 
-1. **Fork** the repository
-2. **Create** a new branch (`git checkout -b feature/your-feature-name`)
-3. **Make** your changes and commit them (`git commit -m "Add: your feature description"`)
-4. **Push** your changes (`git push origin feature/your-feature-name`)
-5. **Create** a Pull Request
+## API Reference
 
-### Development Notes
+Base URL (local): `http://localhost:5000`
 
-- All three services (backend, client, realtime-server) must run simultaneously for full functionality
-- Seed the database before first use: `cd backend && npx ts-node src/scripts/seedAllCards.ts`
-- The backend auto-restarts via Nodemon when files change
-- The client hot-reloads via Vite
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| POST | `/api/auth/register` | No | Register user and issue JWT |
+| POST | `/api/auth/login` | No | Login and issue JWT |
+| GET | `/api/auth/me` | Yes | Get current user profile |
+| GET | `/api/auth/leaderboard` | No | Get top users by score |
+| GET | `/api/cards` | Yes | List cards/cells with owner state |
+| GET | `/api/cards/:id` | Yes | Get one card/cell |
+| POST | `/api/cards/:id/claim` | Yes | Attempt to capture a card/cell |
+| GET | `/health` | No | Service health information |
 
----
+Response shape:
 
-## 📄 License
+```json
+{
+  "success": true,
+  "message": "Success",
+  "data": {}
+}
+```
 
-This project is licensed under the **MIT License**.
+## Realtime Protocol
 
----
+WebSocket URL (local): `ws://localhost:3001?token=<JWT>`
 
-<p align="center">
-  Built with ❤️ by <a href="https://niyaf.xyz">Mohammed Niyaf</a>
-</p>
+Server-to-client events:
+
+- `cardUpdated`
+- `cardExpired`
+- `leaderboardUpdated`
+
+Client keepalive:
+
+- send `{ "type": "PING" }`
+- receive `{ "type": "PONG" }`
+
+Backend sends internal realtime triggers to:
+
+- `POST /internal/broadcast/card-update`
+- `POST /internal/broadcast/card-expired`
+- `POST /internal/broadcast/leaderboard-update`
+
+These endpoints require `x-internal-secret`.
+
+## Concurrency and Conflict Handling
+
+- Claim operation uses an atomic DB update (`findOneAndUpdate`) to avoid double-capture race conditions.
+- Claims only succeed when a cell is unowned or already expired.
+- If two users click at the same time, only one succeeds; the other receives a conflict-style failure.
+
+## Gameplay Rules (Configurable)
+
+- Max claims within a time window
+- Max active captured cells per user
+- Base cooldown after every claim
+- Extra cooldown for trap cells
+- Auto-expiry job clears expired ownership and broadcasts updates
+
+## Deployment Notes
+
+- Each service can be deployed independently (`client`, `backend`, `realtime-server`).
+- Update `FRONTEND_URL`, `VITE_API_URL`, and `VITE_SOCKET_URL` for deployed domains.
+- Use `wss://` for production websocket URLs.
+- Keep `INTERNAL_SECRET` private; never expose internal broadcast routes publicly.
+
+## Current Status and Known Gaps
+
+- Core realtime multi-user flow is implemented and production-structured.
+- Current seed script inserts 60 cells/cards. If your requirement is "hundreds", increase seed volume to 100+.
+
+## License
+
+MIT
+
+

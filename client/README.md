@@ -1,6 +1,6 @@
-# 🎨 TileRush — Client
+# 🎨 Card Rush — Client
 
-Interactive React SPA for TileRush, built with **React 19**, **Vite 7**, **TypeScript**, and **Tailwind CSS 4**. Features a dark-themed, premium UI with real-time updates via WebSockets.
+Interactive React SPA for Card Rush, built with **React 19**, **Vite 7**, **TypeScript**, and **Tailwind CSS 4**. Features a dark-themed, premium UI with real-time updates via WebSockets.
 
 ---
 
@@ -123,3 +123,5 @@ This can be set in a `.env` file or defaults to the value in `services/api.ts`.
 ## 📄 License
 
 MIT
+
+

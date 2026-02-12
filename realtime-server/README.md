@@ -1,6 +1,6 @@
-# ⚡ TileRush — Realtime Server
+# ⚡ Card Rush — Realtime Server
 
-WebSocket server for TileRush that handles real-time broadcasting of game events to all connected clients. Built with **Express 5** and **ws** (WebSocket library).
+WebSocket server for Card Rush that handles real-time broadcasting of game events to all connected clients. Built with **Express 5** and **ws** (WebSocket library).
 
 ---
 
@@ -137,3 +137,4 @@ sequenceDiagram
 ## 📄 License
 
 MIT
+

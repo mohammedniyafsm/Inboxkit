@@ -1,6 +1,6 @@
-# 🔧 TileRush — Backend API
+# 🔧 Card Rush — Backend API
 
-REST API server for TileRush, built with **Express 5** and **MongoDB**. Handles authentication, card management, claiming logic, and real-time broadcast triggers.
+REST API server for Card Rush, built with **Express 5** and **MongoDB**. Handles authentication, card management, claiming logic, and real-time broadcast triggers.
 
 ---
 
@@ -157,3 +157,5 @@ These requests are authenticated via the `x-internal-secret` header.
 ## 📄 License
 
 MIT
+
+
