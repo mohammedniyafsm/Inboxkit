@@ -16,7 +16,7 @@ function postToRealtime(path: string, body: any) {
             'x-internal-secret': INTERNAL_SECRET,
         },
         body: JSON.stringify(body),
-    }).catch((err) => console.error('[RealtimeBroadcast] Failed:', err));
+    }).catch((err: any) => console.error('[RealtimeBroadcast] Failed:', err));
 }
 
 export function broadcastCardUpdate(card: ICard) {
