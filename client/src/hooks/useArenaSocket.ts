@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { type Card } from '@/types/card';
+import { getSocketBaseUrl } from '@/lib/env';
 
 interface ArenaSocketHandlers {
     onCardUpdate?: (card: Card) => void;
@@ -39,10 +40,8 @@ class ArenaSocketManager {
 
         this.token = token;
 
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        // Use env var or default to localhost:3001
-        const host = 'localhost:3001';
-        const wsUrl = `${protocol}//${host}?token=${token}`;
+        const socketBaseUrl = getSocketBaseUrl();
+        const wsUrl = `${socketBaseUrl}?token=${token}`;
 
         console.log('Connecting Singleton Socket:', wsUrl);
 
